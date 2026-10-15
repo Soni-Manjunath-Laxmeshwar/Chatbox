@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Chat</title>
+    <style>
+        :root {
+            --bg-start: #e3f2fd;
+            --bg-end: #f8d7f0;
+            --nav-bg: linear-gradient(90deg, #e699d9, #cfa1ff);
+            --chat-bg: rgba(81, 194, 242, 0.9);
+            --chat-box-bg: #f9f9f9;
+            --message-user-bg: linear-gradient(135deg, #ebadd7, #d88ed0);
+            --message-bot-bg: linear-gradient(135deg, #f0d9fb, #dfeaff);
+            --text-main: #1a1a1a;
+            --input-bg: #ffffff;
+            --input-border: #2f5cbc;
+        }
+
+        body.dark-mode {
+            --bg-start: #111827;
+            --bg-end: #1f2937;
+            --nav-bg: linear-gradient(90deg, #7c3aed, #4338ca);
+            --chat-bg: rgba(31, 41, 55, 0.9);
+            --chat-box-bg: #0f172a;
+            --message-user-bg: linear-gradient(135deg, #a855f7, #7c3aed);
+            --message-bot-bg: linear-gradient(135deg, #334155, #1e293b);
+            --text-main: #f3f4f6;
+            --input-bg: #1e293b;
+            --input-border: #8b5cf6;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-main);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-bar {
+            width: 100%;
+            background: var(--nav-bg);
+            padding: 12px 10px;
+            color: white;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-container {
+            width: 420px;
+            background: var(--chat-bg);
+            padding: 18px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(17, 71, 188, 0.18);
+            margin-top: 12px;
+        }
+
+        .chat-box {
+            height: 320px;
+            overflow-y: auto;
+            border: 1px solid rgba(50, 35, 214, 0.3);
+            padding: 12px;
+            margin-bottom: 12px;
+            background: var(--chat-box-bg);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            position: relative;
+            color: var(--text-main);
+        }
+
+        .message-time {
+            display: block;
+            font-size: 10px;
+            margin-top: 4px;
+            opacity: 0.75;
+        }
+
+        .user {
+            background: var(--message-user-bg);
+            color: white;
+            margin-left: auto;
+            text-align: left;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot {
+            background: var(--message-bot-bg);
+            text-align: left;
+            color: var(--text-main);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 12px;
+            background: #e7e7e7;
+            border-radius: 12px;
+            width: fit-content;
+            margin-right: auto;
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 12px;
+        }
+
+        .assistant-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.35);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .assistant-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .search-row input {
+            width: 100%;
+        }
+
+        .category-bar {
+            display: flex;
+            gap: 8px;
+            margin: 0 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn,
+        .quick-reply-btn {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text-main);
+            border: 1px solid rgba(124, 58, 237, 0.35);
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: white;
+            border-color: transparent;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 90px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #c4b5fd, #f9a8d4, #93c5fd);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .product-card h4 {
+            margin: 0 0 6px;
+            font-size: 13px;
+        }
+
+        .product-card small {
+            display: block;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .product-card .price {
+            font-weight: bold;
+            color: #111827;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .product-card button {
+            width: 100%;
+            padding: 7px 8px;
+            font-size: 12px;
+        }
+
+        .voice-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 10px;
+            padding: 10px 12px;
+            min-width: 46px;
+            font-size: 18px;
+        }
+
+        .voice-btn.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .typing span {
+            width: 7px;
+            height: 7px;
+            background: #777;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1.2s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+            40% { opacity: 1; transform: translateY(-2px); }
+        }
+
+        input {
+            width: calc(100% - 80px);
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            background: linear-gradient(135deg, #1147bc, #2468d9);
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .emoji-bar {
+            margin-top: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .emoji-bar button {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .flying-emoji {
+            position: absolute;
+            font-size: 30px;
+            pointer-events: none;
+            animation: blast 1.5s ease-out forwards;
+        }
+
+        @keyframes blast {
+            0% {
+                transform: scale(1) translate(0, 0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5) translate(var(--x-move), var(--y-move));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav-bar">Categories: Men | Women | Mixed</div>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox"></div>
+        <div class="assistant-banner">
+            <span>AI Personal Shopper</span>
+            <span class="assistant-badge">✨</span>
+        </div>
+        <div class="search-row">
+            <input type="text" id="productSearch" placeholder="Search products...">
+            <button onclick="searchProducts()">Search</button>
+        </div>
+        <div class="category-bar" id="categoryBar"></div>
+        <div class="quick-replies" id="quickReplies"></div>
+        <div class="emoji-bar">
+            <button onclick="addEmoji('😊')">😊</button>
+            <button onclick="addEmoji('😂')">😂</button>
+            <button onclick="addEmoji('❤')">❤</button>
+            <button onclick="addEmoji('👍')">👍</button>
+            <button onclick="addEmoji('❤')">❤</button>
+            <button onclick="addEmoji('🔥')">🔥</button>
+            <button onclick="addEmoji('🥰')">🥰</button>
+            <button onclick="addEmoji('🎀')">🎀</button>
+            <button onclick="addEmoji('🤑')">🤑</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <input type="text" id="userInput" placeholder="Type a message...">
+            <button class="voice-btn" id="voiceBtn" title="Voice input">🎙️</button>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <button id="themeToggle" onclick="toggleTheme()" style="width:100%; background:linear-gradient(135deg, #7c3aed, #4f46e5);">Dark mode</button>
+        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:10px; background: rgba(255,255,255,0.25); font-weight:bold;">
+            <span>Cart</span>
+            <span id="cartBadge" style="display:inline-flex; min-width:22px; height:22px; align-items:center; justify-content:center; border-radius:50%; background:#ff4d6d; color:white; font-size:12px;">0</span>
+        </div>
+    </div>
+    <script>
+        const input = document.getElementById("userInput");
+        const chatBox = document.getElementById("chatBox");
+        const quickReplies = document.getElementById("quickReplies");
+        const categoryBar = document.getElementById("categoryBar");
+        const themeToggle = document.getElementById("themeToggle");
+        const voiceBtn = document.getElementById("voiceBtn");
+        const productSearch = document.getElementById("productSearch");
+        let cartCount = 0;
+
+        const catalog = [
+            { title: "Urban Street Tee", price: "$29", tag: "Men", emoji: "👕", keywords: ["tshirt", "shirt", "casual", "men"] },
+            { title: "Velvet Evening Set", price: "$49", tag: "Women", emoji: "👗", keywords: ["dress", "party", "women", "elegant"] },
+            { title: "Active Flex Hoodie", price: "$54", tag: "Mixed", emoji: "🧥", keywords: ["hoodie", "jacket", "winter", "mixed"] },
+            { title: "Signature Leather Bag", price: "$39", tag: "New", emoji: "👜", keywords: ["bag", "accessory", "new", "fashion"] }
+        ];
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
+            if (themeToggle) {
+                const isDark = document.body.classList.contains("dark-mode");
+                themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
+            }
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById("cartBadge");
+            if (badge) badge.textContent = cartCount;
+        }
+
+        function renderCategoryFilters() {
+            const categories = ["All", "Men", "Women", "Mixed", "New"];
+            categoryBar.innerHTML = "";
+
+            categories.forEach(category => {
+                const btn = document.createElement("button");
+                btn.className = "category-btn" + (category === "All" ? " active" : "");
+                btn.textContent = category;
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".category-btn").forEach(el => el.classList.remove("active"));
+                    btn.classList.add("active");
+                    if (category === "All") {
+                        showProductCards();
+                    } else {
+                        showProductCards(category);
+                    }
+                });
+                categoryBar.appendChild(btn);
+            });
+        }
+
+        function renderQuickReplies(items) {
+            quickReplies.innerHTML = "";
+            items.forEach(item => {
+                const btn = document.createElement("button");
+                btn.className = "quick-reply-btn";
+                btn.textContent = item;
+                btn.addEventListener("click", () => {
+                    input.value = item;
+                    sendMessage();
+                });
+                quickReplies.appendChild(btn);
+            });
+        }
+
+        function addWelcomeMessage() {
+            const welcome = createMessageBubble("Welcome! I’m Nexus — ask me anything about style, shopping, or just say hello!", "bot");
+            chatBox.appendChild(welcome);
+        }
+
+        function formatTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function createMessageBubble(text, type) {
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("message", type);
+
+            const messageText = document.createElement("div");
+            messageText.textContent = text;
+
+            const time = document.createElement("span");
+            time.classList.add("message-time");
+            time.textContent = formatTime();
+
+            wrapper.appendChild(messageText);
+            wrapper.appendChild(time);
+            return wrapper;
+        }
+
+        function getBotReply(message) {
+            const lower = message.toLowerCase();
+
+            if (lower.includes("hello") || lower.includes("hi")) return "Hello! I can help you find the perfect item. Want something casual, elegant, or cozy?";
+            if (lower.includes("bye") || lower.includes("goodbye")) return "Goodbye! Come back soon — I’ll keep the style picks ready.";
+            if (lower.includes("how are you")) return "I’m doing great, thanks for asking! Ready to match you with the best style options.";
+            if (lower.includes("name")) return "I’m Nexus, your friendly AI shopping assistant.";
+            if (lower.includes("love") || lower.includes("like")) return "Aww, that’s sweet! I’ll keep your taste in mind for future picks.";
+            if (lower.includes("shirt") || lower.includes("tshirt") || lower.includes("casual")) {
+                showProductCards("Men", "shirt");
+                return "I found a few casual essentials for you — here are the best matches.";
+            }
+            if (lower.includes("dress") || lower.includes("party") || lower.includes("elegant")) {
+                showProductCards("Women", "dress");
+                return "For a more elegant look, I recommend this dress set and matching accessories.";
+            }
+            if (lower.includes("jacket") || lower.includes("hoodie") || lower.includes("winter") || lower.includes("cozy")) {
+                showProductCards("Mixed", "hoodie");
+                return "You’re looking for cozy layering pieces. These are my top recommendations.";
+            }
+            if (lower.includes("bag") || lower.includes("accessory") || lower.includes("gift")) {
+                showProductCards("New", "bag");
+                return "A stylish accessory makes a great gift. I’d start with this bag.";
+            }
+            if (lower.includes("fashion") || lower.includes("clothes") || lower.includes("men") || lower.includes("women") || lower.includes("style") || lower.includes("shop")) {
+                showProductCards("All");
+                return "I’ve curated a few top picks across categories for you.";
+            }
+            return "I’m here to help you shop smarter. Try searching for a style like casual, dressy, bag, or jacket.";
+        }
+
+        function openProductModal(product) {
+            const modal = document.createElement("div");
+            modal.style.position = "fixed";
+            modal.style.inset = "0";
+            modal.style.background = "rgba(15, 23, 42, 0.7)";
+            modal.style.display = "flex";
+            modal.style.alignItems = "center";
+            modal.style.justifyContent = "center";
+            modal.style.zIndex = "1000";
+
+            const panel = document.createElement("div");
+            panel.style.width = "320px";
+            panel.style.background = "#fff";
+            panel.style.borderRadius = "16px";
+            panel.style.padding = "18px";
+            panel.style.boxShadow = "0 16px 40px rgba(0,0,0,0.2)";
+            panel.style.color = "#111827";
+
+            panel.innerHTML = `
+                <div style="font-size:44px; text-align:center; margin-bottom:12px;">${product.emoji}</div>
+                <h3 style="margin:0 0 8px;">${product.title}</h3>
+                <p style="margin:0 0 8px; color:#6b7280;">${product.tag} Collection</p>
+                <p style="font-size:24px; font-weight:bold; margin:0 0 12px;">${product.price}</p>
+                <p style="margin:0 0 14px; line-height:1.5;">Premium pick designed for comfort, style, and everyday confidence.</p>
+                <div style="display:flex; gap:8px;">
+                    <button class="add-cart-btn" style="flex:1;">Add to cart</button>
+                    <button onclick="this.closest('div[style*="position: fixed"]')?.remove()" style="flex:1; background:linear-gradient(135deg, #64748b, #475569);">Close</button>
+                </div>
+            `;
+
+            const addBtn = panel.querySelector(".add-cart-btn");
+            addBtn.addEventListener("click", () => {
+                cartCount += 1;
+                updateCartBadge();
+                addBtn.textContent = "Added";
+                addBtn.disabled = true;
+            });
+
+            modal.appendChild(panel);
+            document.body.appendChild(modal);
+        }
+
+        function showProductCards(filter = "All", keyword = "") {
+            const existingGrid = document.querySelector(".product-grid");
+            if (existingGrid) existingGrid.remove();
+
+            let filteredProducts = filter === "All" ? catalog : catalog.filter(product => product.tag === filter);
+            if (keyword) {
+                filteredProducts = filteredProducts.filter(product => {
+                    const low = keyword.toLowerCase();
+                    return product.keywords.some(item => low.includes(item)) || product.title.toLowerCase().includes(low);
+                });
+            }
+
+            if (!filteredProducts.length) {
+                filteredProducts = catalog;
+            }
+
+            const cardWrap = document.createElement("div");
+            cardWrap.className = "product-grid";
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.innerHTML = `
+                    <div class="product-image">${product.emoji}</div>
+                    <h4>${product.title}</h4>
+                    <small>${product.tag}</small>
+                    <span class="price">${product.price}</span>
+                    <button class="add-cart-btn">Add to cart</button>
+                    <button class="details-btn" style="margin-top:8px; background:linear-gradient(135deg, #f59e0b, #f97316);">Details</button>
+                `;
+
+                const addBtn = card.querySelector(".add-cart-btn");
+                addBtn.addEventListener("click", () => {
+                    cartCount += 1;
+                    updateCartBadge();
+                    addBtn.textContent = "Added";
+                    addBtn.disabled = true;
+                    setTimeout(() => {
+                        addBtn.textContent = "Add to cart";
+                        addBtn.disabled = false;
+                    }, 1200);
+                });
+
+                const detailsBtn = card.querySelector(".details-btn");
+                detailsBtn.addEventListener("click", () => openProductModal(product));
+                cardWrap.appendChild(card);
+            });
+
+            chatBox.appendChild(cardWrap);
+        }
+
+        function showTypingIndicator() {
+            const typing = document.createElement("div");
+            typing.classList.add("typing");
+            typing.innerHTML = "<span></span><span></span><span></span>";
+            typing.setAttribute("id", "typing-indicator");
+            chatBox.appendChild(typing);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById("typing-indicator");
+            if (typing) typing.remove();
+        }
+
+        function speakReply(text) {
+            if (!('speechSynthesis' in window)) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1.2;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function searchProducts() {
+            const query = productSearch.value.trim();
+            if (!query) {
+                showProductCards();
+                return;
+            }
+            showProductCards("All", query);
+            chatBox.appendChild(createMessageBubble(`Showing results for "${query}"`, "bot"));
+        }
+
+        function sendMessage() {
+            let message = input.value.trim();
+            if (message === "") return;
+
+            chatBox.appendChild(createMessageBubble(message, "user"));
+            input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            showTypingIndicator();
+
+            setTimeout(() => {
+                removeTypingIndicator();
+                const replyText = getBotReply(message);
+                const reply = createMessageBubble(replyText, "bot");
+                chatBox.appendChild(reply);
+                speakReply(replyText.replace(/^.*?:\s*/, ""));
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 700);
+        }
+
+        function startVoiceInput() {
+            if (!SpeechRecognition) {
+                input.value = "Voice input is not supported in this browser.";
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.start();
+            voiceBtn.classList.add('listening');
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript;
+                input.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onend = function () {
+                voiceBtn.classList.remove('listening');
+            };
+
+            recognition.onerror = function () {
+                voiceBtn.classList.remove('listening');
+                input.value = "Voice input failed. Please type your message.";
+            };
+        }
+
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        voiceBtn.addEventListener("click", startVoiceInput);
+
+        productSearch.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                searchProducts();
+            }
+        });
+
+        renderCategoryFilters();
+        renderQuickReplies(["Men's Picks", "Women's Picks", "New Arrivals", "Sale Items"]);
+        addWelcomeMessage();
+        showProductCards();
+
+        function addEmoji(emoji) {
+            for (let i = 0; i < 50; i++) {
+                createFlyingEmoji(emoji);
+            }
+        }
+
+        function createFlyingEmoji(emoji) {
+            let emojiElement = document.createElement("div");
+            emojiElement.classList.add("flying-emoji");
+            emojiElement.textContent = emoji;
+            document.body.appendChild(emojiElement);
+
+            let x = Math.random() * window.innerWidth;
+            let y = Math.random() * window.innerHeight;
+            emojiElement.style.left = x + "px";
+            emojiElement.style.top = y + "px";
+
+            let xMove = (Math.random() - 0.5) * 500 + "px";
+            let yMove = (Math.random() - 0.5) * 500 + "px";
+            emojiElement.style.setProperty('--x-move', xMove);
+            emojiElement.style.setProperty('--y-move', yMove);
+
+            setTimeout(() => {
+                emojiElement.remove();
+            }, 1500);
+        }
+    </script>
+</body>
+
+</html>
